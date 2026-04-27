@@ -1,3 +1,5 @@
+"use client";
+
 import { store } from "@/lib/store";
 import { ReactNode } from "react";
 import { CookiesProvider } from "react-cookie";
