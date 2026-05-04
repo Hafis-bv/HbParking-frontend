@@ -1,44 +1,25 @@
 "use client";
 
-import { HbParkingLogo } from "@/assets/icons/HbParkingLogo";
 import { useAuth } from "@/hooks/useAuth";
-import { ContactFormData, contactSchema, ErrorState } from "@/schemas/contact";
 import { FirebaseError } from "firebase/app";
 import { ChangeEvent, FormEvent, useState } from "react";
 import z from "zod";
+import { loginSchema, LoginFormData, ErrorState } from "@/schemas/login";
+import { HbParkingLogo } from "@/assets/icons/HbParkingLogo";
 
-export function RegisterForm() {
-  const [formData, setFormData] = useState<ContactFormData>({
+export function LoginForm() {
+  const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
-    terms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<ErrorState>({
     email: null,
     password: null,
-    terms: null,
     general: null,
   });
 
-  const getStrength = (val: string): number => {
-    let score = 0;
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
-    if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-    return score;
-  };
-
-  const strengthColors = [
-    "bg-red-500",
-    "bg-orange-400",
-    "bg-yellow-400",
-    "bg-emerald-500",
-  ];
-  const strength = getStrength(formData.password);
-
-  const { loading, setLoading, handleGoogleLogin, handleEmailRegister } =
+  const { loading, setLoading, handleGoogleLogin, handleEmailLogin } =
     useAuth();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +30,7 @@ export function RegisterForm() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const result = contactSchema.safeParse(formData);
+    const result = loginSchema.safeParse(formData);
 
     if (!result.success) {
       const flattened = z.flattenError(result.error);
@@ -58,27 +39,32 @@ export function RegisterForm() {
       setErrors({
         email: fieldErrors.email?.[0] ?? null,
         password: fieldErrors.password?.[0] ?? null,
-        terms: fieldErrors.terms?.[0] ?? null,
         general: null,
       });
       return;
     }
 
     setLoading(true);
-
     setErrors({ ...errors, general: null });
 
     try {
-      await handleEmailRegister(formData.email, formData.password);
+      await handleEmailLogin(formData.email, formData.password);
     } catch (err) {
       if (err instanceof FirebaseError) {
         const code = String(err.code || "");
-        if (code === "auth/email-already-in-use") {
-          setErrors((prev) => ({ ...prev, general: "User already exists" }));
+        if (
+          code === "auth/user-not-found" ||
+          code === "auth/wrong-password" ||
+          code === "auth/invalid-credential"
+        ) {
+          setErrors((prev) => ({
+            ...prev,
+            general: "Invalid email or password.",
+          }));
         } else {
           setErrors((prev) => ({
             ...prev,
-            general: "Registration failed. Please try again!",
+            general: "Login failed. Please try again!",
           }));
         }
       }
@@ -100,15 +86,15 @@ export function RegisterForm() {
 
         {/* Heading */}
         <h1 className="text-2xl font-semibold text-emerald-950 tracking-tight leading-tight mb-1.5">
-          Create your account
+          Welcome back
         </h1>
         <p className="text-sm text-gray-500 mb-7">
-          Already have one?{" "}
+          Don&apos;t have an account?{" "}
           <a
-            href="/login"
+            href="/register"
             className="text-emerald-600 font-medium hover:underline"
           >
-            Sign in
+            Sign up
           </a>
         </p>
 
@@ -176,18 +162,16 @@ export function RegisterForm() {
               <input
                 id="email"
                 type="email"
+                name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email address"
                 autoComplete="email"
-                name="email"
                 className="w-full pl-9 pr-3.5 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 placeholder:text-[13px] focus:outline-none focus:border-emerald-500 focus:ring-[3px] focus:ring-emerald-500/10 transition-all duration-150"
               />
             </div>
-
-            {/* Error message */}
             {errors.email && (
-              <span className="text-[13px] text-red-500 mb-3">
+              <span className="text-[13px] text-red-500 mt-1 block">
                 {errors.email}
               </span>
             )}
@@ -195,12 +179,14 @@ export function RegisterForm() {
 
           {/* Password */}
           <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-[13px] font-medium text-gray-700 mb-1.5"
-            >
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="password"
+                className="block text-[13px] font-medium text-gray-700"
+              >
+                Password
+              </label>
+            </div>
             <div className="relative">
               <svg
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 stroke-gray-400 fill-none transition-colors duration-150"
@@ -215,11 +201,11 @@ export function RegisterForm() {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Create a strong password"
-                autoComplete="new-password"
-                name="password"
+                placeholder="Enter your password"
+                autoComplete="current-password"
                 className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 placeholder:text-[13px] focus:outline-none focus:border-emerald-500 focus:ring-[3px] focus:ring-emerald-500/10 transition-all duration-150"
               />
               <button
@@ -254,79 +240,24 @@ export function RegisterForm() {
                 )}
               </button>
             </div>
-
-            {/* Strength bar */}
-            {formData.password.length > 0 && (
-              <div className="flex gap-1 mt-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className={`h-[3px] flex-1 rounded-full transition-all duration-300 ${
-                      i <= strength
-                        ? strengthColors[strength - 1]
-                        : "bg-gray-200"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Error message */}
             {errors.password && (
-              <span className="text-[13px] text-red-500 mb-3">
+              <span className="text-[13px] text-red-500 mt-1 block">
                 {errors.password}
               </span>
             )}
-            {/* Error message */}
             {errors.general && (
-              <span className="text-[13px] block text-red-500 !mt-5">
+              <span className="text-[13px] block text-red-500 mt-2">
                 {errors.general}
               </span>
             )}
           </div>
 
-          {/* Terms */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                id="terms"
-                type="checkbox"
-                checked={formData.terms}
-                onChange={(e) => {
-                  setFormData({ ...formData, terms: e.target.checked });
-                  setErrors({ ...errors, terms: null });
-                }}
-                className="w-[15px] h-[15px] accent-emerald-600 cursor-pointer"
-              />
-              <label
-                htmlFor="terms"
-                className="text-[13px] text-gray-500 cursor-pointer select-none"
-              >
-                I agree to the{" "}
-                <a
-                  href="/terms"
-                  className="text-emerald-600 font-medium hover:underline"
-                >
-                  Terms of Service
-                </a>
-              </label>
-            </div>
-            {/* Error message */}
-            <div className="-mt-3 mb-8">
-              {errors.terms && (
-                <span className="text-[13px] text-red-500 mb-3">
-                  {errors.terms}
-                </span>
-              )}
-            </div>
-          </div>
-
           {/* Submit */}
           <button
             disabled={loading}
-            className={`w-full py-3 rounded-xl text-[15px] font-semibold cursor-pointer text-white tracking-tight transition-all duration-150 active:scale-[0.985] bg-emerald-600 hover:bg-emerald-400 hover:shadow-[0_4px_14px_rgba(5,150,105,0.35)]`}
+            className="w-full mt-4 py-3 rounded-xl text-[15px] font-semibold cursor-pointer text-white tracking-tight transition-all duration-150 active:scale-[0.985] bg-emerald-600 hover:bg-emerald-400 hover:shadow-[0_4px_14px_rgba(5,150,105,0.35)]"
           >
-            {loading ? "Creating account…" : "Create account"}
+            {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
       </div>

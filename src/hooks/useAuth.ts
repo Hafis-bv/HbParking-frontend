@@ -1,6 +1,15 @@
+"use client";
+
 import { firebaseAuth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
 import { useCookies } from "react-cookie";
 
 const providers = {
@@ -12,23 +21,75 @@ type Provider = keyof typeof providers;
 export function useAuth() {
   const [loading, setLoading] = useState(false);
   const [, setCookie, removeCookie] = useCookies(["auth_token"]);
+  const router = useRouter();
+
+  async function saveToken() {
+    const user = firebaseAuth.currentUser;
+
+    if (!user) return;
+    const firebaseToken = await user.getIdToken();
+    setCookie("auth_token", firebaseToken, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+  }
 
   async function handleLogin(provider: Provider) {
     setLoading(true);
     try {
-      const { user } = await signInWithPopup(firebaseAuth, providers[provider]);
-
-      const firebaseToken = await user.getIdToken();
-      if (firebaseToken) {
-        setCookie("auth_token", firebaseToken, {
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        });
-      }
+      await signInWithPopup(firebaseAuth, providers[provider]);
+      await saveToken();
+      router.push("/");
     } catch (err) {
       console.log(err);
+      throw err;
     } finally {
       setLoading(false);
     }
   }
+
+  async function handleEmailRegister(email: string, password: string) {
+    setLoading(true);
+    try {
+      await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      saveToken();
+      router.push("/");
+    } catch (err) {
+      console.log(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleEmailLogin(email: string, password: string) {
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      await saveToken();
+      router.push("/");
+    } catch (err) {
+      console.log(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function hadleLogout() {
+    await signOut(firebaseAuth);
+
+    removeCookie("auth_token", {
+      path: "/",
+    });
+  }
+
+  return {
+    loading,
+    handleGoogleLogin: () => handleLogin("google"),
+    handleEmailRegister,
+    handleEmailLogin,
+    hadleLogout,
+    setLoading,
+  };
 }

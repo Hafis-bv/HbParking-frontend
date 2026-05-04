@@ -7,7 +7,7 @@ interface HbParkingLogoProps extends SVGProps<SVGSVGElement> {
   showTagline?: boolean;
 }
 
-export default function HbParkingLogo({
+export function HbParkingLogo({
   width = 280,
   showTagline = true,
   ...props

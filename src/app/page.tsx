@@ -1,7 +1,9 @@
+import Dashbord from "@/widgets/Dashbord";
+
 export default function Home() {
   return (
     <div>
-      <h1>eufwiu</h1>
+      <Dashbord />
     </div>
   );
 }

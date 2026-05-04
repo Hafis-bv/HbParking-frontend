@@ -1,4 +1,4 @@
-import RegisterForm from "./widgets/RegisterForm";
+import { RegisterForm } from "./widgets/RegisterForm";
 
 export default function Register() {
   return (
