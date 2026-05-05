@@ -6,6 +6,7 @@ import { ContactFormData, contactSchema, ErrorState } from "@/schemas/contact";
 import { FirebaseError } from "firebase/app";
 import { ChangeEvent, FormEvent, useState } from "react";
 import z from "zod";
+import axios from "axios";
 
 export function RegisterForm() {
   const [formData, setFormData] = useState<ContactFormData>({
@@ -69,7 +70,16 @@ export function RegisterForm() {
     setErrors({ ...errors, general: null });
 
     try {
-      await handleEmailRegister(formData.email, formData.password);
+      const user = await handleEmailRegister(formData.email, formData.password);
+
+      const token = await user.getIdToken();
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          token,
+        },
+        { withCredentials: true },
+      );
     } catch (err) {
       if (err instanceof FirebaseError) {
         const code = String(err.code || "");

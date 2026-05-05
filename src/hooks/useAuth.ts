@@ -51,9 +51,15 @@ export function useAuth() {
   async function handleEmailRegister(email: string, password: string) {
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(firebaseAuth, email, password);
-      saveToken();
+      const { user } = await createUserWithEmailAndPassword(
+        firebaseAuth,
+        email,
+        password,
+      );
+      await saveToken();
       router.push("/");
+
+      return user;
     } catch (err) {
       console.log(err);
       throw err;
