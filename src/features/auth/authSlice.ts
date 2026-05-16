@@ -1,4 +1,6 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { firebaseAuth } from "@/lib/firebase";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import axios from "axios";
 
 interface IUser {
   name: string;
@@ -23,6 +25,25 @@ const initialState: InitialState = {
   isLoggedIn: false,
 };
 
+export const fetchUser = createAsyncThunk(
+  "auth/fetchUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const currentUser = firebaseAuth.currentUser;
+      if (!currentUser) return rejectWithValue("No user logged in");
+      const token = await currentUser.getIdToken();
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      return rejectWithValue("Failed to fetch user");
+    }
+  },
+);
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -35,6 +56,26 @@ export const authSlice = createSlice({
       state.user = null;
       state.isLoggedIn = false;
     },
+  },
+
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUser.pending, (state) => {
+        state.error = null;
+        state.loading = true;
+      })
+      .addCase(fetchUser.fulfilled, (state, action: PayloadAction<IUser>) => {
+        state.user = action.payload;
+        state.isLoggedIn = true;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(fetchUser.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.loading = false;
+        state.isLoggedIn = false;
+        state.user = null;
+      });
   },
 });
 

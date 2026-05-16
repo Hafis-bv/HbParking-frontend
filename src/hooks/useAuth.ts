@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useAppDispatch } from "./redux";
-import { logout, setUser } from "@/features/auth/authSlice";
+import { fetchUser, logout, setUser } from "@/features/auth/authSlice";
 import axios from "axios";
 
 const providers = {
@@ -44,16 +44,7 @@ export function useAuth() {
       const { user } = await signInWithPopup(firebaseAuth, providers[provider]);
       console.log(user);
       await saveToken();
-      dispatch(
-        setUser({
-          name: user.displayName || "Guest",
-          id: user.uid,
-          email: user.email!,
-          photoURL: user.photoURL!,
-          lastSignInTime: user.metadata.lastSignInTime!,
-          creationTime: user.metadata.creationTime!,
-        }),
-      );
+      dispatch(fetchUser());
       router.push("/");
     } catch (err) {
       console.log(err);
@@ -72,16 +63,7 @@ export function useAuth() {
         password,
       );
       await saveToken();
-      dispatch(
-        setUser({
-          name: user.displayName || "Guest",
-          id: user.uid,
-          email: user.email!,
-          photoURL: user.photoURL!,
-          lastSignInTime: user.metadata.lastSignInTime!,
-          creationTime: user.metadata.creationTime!,
-        }),
-      );
+      dispatch(fetchUser());
       router.push("/");
 
       return user;
@@ -102,16 +84,7 @@ export function useAuth() {
         password,
       );
       await saveToken();
-      dispatch(
-        setUser({
-          name: user.displayName || "Guest",
-          id: user.uid,
-          email: user.email!,
-          photoURL: user.photoURL!,
-          lastSignInTime: user.metadata.lastSignInTime!,
-          creationTime: user.metadata.creationTime!,
-        }),
-      );
+      dispatch(fetchUser());
       router.push("/");
     } catch (err) {
       console.log(err);
