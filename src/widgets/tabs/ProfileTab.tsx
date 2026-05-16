@@ -2,6 +2,7 @@
 import { useAppSelector } from "@/hooks/redux";
 import { USER } from "../Dashbord";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDate } from "@/utils/formatDate";
 
 export function ProfileTab() {
   const { user } = useAppSelector((state) => state.auth);
@@ -10,26 +11,18 @@ export function ProfileTab() {
     <div className="flex flex-col gap-4 pb-4">
       {/* Avatar + name */}
       <div className="flex items-center gap-4 px-1 py-2">
-        {user?.photoURL ? (
-          <div>
-            <img
-              className="rounded-2xl w-16 h-16"
-              src={user.photoURL}
-              alt={user.name}
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        ) : (
-          <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {user?.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")}
-          </div>
-        )}
+        <div className="w-16 h-16 rounded-2xl uppercase bg-emerald-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+          {user?.email
+            .split(" ")
+            .map((n) => n[0])
+            .join("")}
+        </div>
+
         <div>
-          <p className="text-lg font-semibold text-gray-900">{user?.name}</p>
-          <p className="text-sm text-gray-400">{user?.email}</p>
+          <p className="text-lg font-semibold text-gray-900">{user?.email}</p>
+          <p className="text-sm text-gray-400">
+            Since {formatDate(user?.createdAt || "")}
+          </p>
         </div>
       </div>
 
@@ -39,7 +32,7 @@ export function ProfileTab() {
           <p className="text-emerald-100 text-xs uppercase tracking-widest mb-1">
             Wallet balance
           </p>
-          <p className="text-white text-2xl font-bold">${USER.balance}</p>
+          <p className="text-white text-2xl font-bold">${user?.balance}</p>
         </div>
         <button className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-xl transition-all active:scale-[0.97]">
           Top up

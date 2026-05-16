@@ -70,16 +70,7 @@ export function RegisterForm() {
     setErrors({ ...errors, general: null });
 
     try {
-      const user = await handleEmailRegister(formData.email, formData.password);
-
-      const token = await user.getIdToken();
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
-        {
-          token,
-        },
-        { withCredentials: true },
-      );
+      await handleEmailRegister(formData.email, formData.password);
     } catch (err) {
       if (err instanceof FirebaseError) {
         const code = String(err.code || "");

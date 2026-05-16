@@ -88,23 +88,12 @@ export default function Dashbord() {
         <div className="flex items-center justify-between mb-6">
           <HbParkingLogo width={140} showTagline={false} />
           <div>
-            {user?.photoURL ? (
-              <div>
-                <img
-                  className="w-9 h-9 rounded-xl"
-                  src={user.photoURL}
-                  alt={user.name}
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            ) : (
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-md font-bold">
-                {user?.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </div>
-            )}
+            <div className="w-9 h-9 rounded-xl uppercase bg-emerald-600 flex items-center justify-center text-white text-md font-bold">
+              {user?.email
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </div>
           </div>
         </div>
 

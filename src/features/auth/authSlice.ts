@@ -3,12 +3,13 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
 interface IUser {
-  name: string;
   id: string;
   email: string;
-  photoURL: string;
-  creationTime: string;
-  lastSignInTime: string;
+  createdAt: string;
+  balance: number;
+  role: string;
+  sessions: any[];
+  plateNumbers: any[];
 }
 
 interface InitialState {

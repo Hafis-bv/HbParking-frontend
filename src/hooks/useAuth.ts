@@ -44,7 +44,17 @@ export function useAuth() {
       const { user } = await signInWithPopup(firebaseAuth, providers[provider]);
       console.log(user);
       await saveToken();
-      dispatch(fetchUser());
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          token: await user.getIdToken(),
+        },
+        { withCredentials: true },
+      );
+
+      await dispatch(fetchUser());
+
       router.push("/");
     } catch (err) {
       console.log(err);
@@ -63,7 +73,17 @@ export function useAuth() {
         password,
       );
       await saveToken();
-      dispatch(fetchUser());
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          token: await user.getIdToken(),
+        },
+        { withCredentials: true },
+      );
+
+      await dispatch(fetchUser());
+
       router.push("/");
 
       return user;
