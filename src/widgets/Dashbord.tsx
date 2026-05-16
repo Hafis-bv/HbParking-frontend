@@ -8,6 +8,7 @@ import { TimeTab } from "./tabs/TimeTab";
 import { MapTab } from "./tabs/MapTab";
 import { ProfileTab } from "./tabs/ProfileTab";
 import { MapIcon } from "@/assets/icons/MapIcon";
+import { useAppSelector } from "@/hooks/redux";
 
 // ─── Tab types ───────────────────────────────────────────────────────────────
 type Tab = "time" | "map" | "profile";
@@ -68,6 +69,7 @@ export const USER = {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Dashbord() {
   const [tab, setTab] = useState<Tab>("time");
+  const { user } = useAppSelector((state) => state.auth);
 
   const tabs: {
     id: Tab;
@@ -85,11 +87,24 @@ export default function Dashbord() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <HbParkingLogo width={140} showTagline={false} />
-          <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-sm font-bold">
-            {USER.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")}
+          <div>
+            {user?.photoURL ? (
+              <div>
+                <img
+                  className="w-9 h-9 rounded-xl"
+                  src={user.photoURL}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-md font-bold">
+                {user?.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthProvider } from "@/components/AuthProvider";
 import { store } from "@/lib/store";
 import { ReactNode } from "react";
 import { CookiesProvider } from "react-cookie";
@@ -12,7 +13,9 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <CookiesProvider>
-      <Provider store={store}>{children}</Provider>;
+      <Provider store={store}>
+        <AuthProvider>{children}</AuthProvider>
+      </Provider>
     </CookiesProvider>
   );
 }

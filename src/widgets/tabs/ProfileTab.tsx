@@ -1,22 +1,35 @@
+"use client";
+import { useAppSelector } from "@/hooks/redux";
 import { USER } from "../Dashbord";
+import { useAuth } from "@/hooks/useAuth";
 
 export function ProfileTab() {
+  const { user } = useAppSelector((state) => state.auth);
+  const { handleLogout } = useAuth();
   return (
     <div className="flex flex-col gap-4 pb-4">
       {/* Avatar + name */}
       <div className="flex items-center gap-4 px-1 py-2">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-          {USER.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")}
-        </div>
+        {user?.photoURL ? (
+          <div>
+            <img
+              className="rounded-2xl w-16 h-16"
+              src={user.photoURL}
+              alt={user.name}
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        ) : (
+          <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+            {user?.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")}
+          </div>
+        )}
         <div>
-          <p className="text-lg font-semibold text-gray-900">{USER.name}</p>
-          <p className="text-sm text-gray-400">{USER.email}</p>
-          <span className="inline-block mt-1 text-[11px] font-medium bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
-            {USER.plan} Plan
-          </span>
+          <p className="text-lg font-semibold text-gray-900">{user?.name}</p>
+          <p className="text-sm text-gray-400">{user?.email}</p>
         </div>
       </div>
 
@@ -51,22 +64,6 @@ export function ProfileTab() {
             ),
             label: "License plate",
             value: USER.plate,
-          },
-          {
-            icon: (
-              <svg
-                className="w-4 h-4 stroke-emerald-600 fill-none"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            ),
-            label: "Account plan",
-            value: USER.plan,
           },
           {
             icon: (
@@ -125,7 +122,10 @@ export function ProfileTab() {
       </div>
 
       {/* Sign out */}
-      <button className="w-full py-3 rounded-xl border border-red-100 bg-red-50 text-red-500 text-sm font-semibold hover:bg-red-100 active:scale-[0.98] transition-all">
+      <button
+        onClick={handleLogout}
+        className="w-full py-3 rounded-xl border cursor-pointer border-red-100 bg-red-50 text-red-500 text-sm font-semibold hover:bg-red-100 active:scale-[0.98] transition-all"
+      >
         Sign out
       </button>
     </div>

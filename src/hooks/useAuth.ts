@@ -11,6 +11,9 @@ import {
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { useCookies } from "react-cookie";
+import { useAppDispatch } from "./redux";
+import { logout, setUser } from "@/features/auth/authSlice";
+import axios from "axios";
 
 const providers = {
   google: new GoogleAuthProvider(),
@@ -22,6 +25,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(false);
   const [, setCookie, removeCookie] = useCookies(["auth_token"]);
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   async function saveToken() {
     const user = firebaseAuth.currentUser;
@@ -37,8 +41,19 @@ export function useAuth() {
   async function handleLogin(provider: Provider) {
     setLoading(true);
     try {
-      await signInWithPopup(firebaseAuth, providers[provider]);
+      const { user } = await signInWithPopup(firebaseAuth, providers[provider]);
+      console.log(user);
       await saveToken();
+      dispatch(
+        setUser({
+          name: user.displayName || "Guest",
+          id: user.uid,
+          email: user.email!,
+          photoURL: user.photoURL!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          creationTime: user.metadata.creationTime!,
+        }),
+      );
       router.push("/");
     } catch (err) {
       console.log(err);
@@ -57,6 +72,16 @@ export function useAuth() {
         password,
       );
       await saveToken();
+      dispatch(
+        setUser({
+          name: user.displayName || "Guest",
+          id: user.uid,
+          email: user.email!,
+          photoURL: user.photoURL!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          creationTime: user.metadata.creationTime!,
+        }),
+      );
       router.push("/");
 
       return user;
@@ -71,8 +96,22 @@ export function useAuth() {
   async function handleEmailLogin(email: string, password: string) {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      const { user } = await signInWithEmailAndPassword(
+        firebaseAuth,
+        email,
+        password,
+      );
       await saveToken();
+      dispatch(
+        setUser({
+          name: user.displayName || "Guest",
+          id: user.uid,
+          email: user.email!,
+          photoURL: user.photoURL!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          creationTime: user.metadata.creationTime!,
+        }),
+      );
       router.push("/");
     } catch (err) {
       console.log(err);
@@ -82,12 +121,26 @@ export function useAuth() {
     }
   }
 
-  async function hadleLogout() {
+  async function handleLogout() {
+    const user = firebaseAuth.currentUser;
+    const firebaseToken = await user?.getIdToken();
     await signOut(firebaseAuth);
+    dispatch(logout());
 
     removeCookie("auth_token", {
       path: "/",
     });
+
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/logout`,
+      {
+        token: firebaseToken,
+      },
+      {
+        withCredentials: true,
+      },
+    );
+    router.push("/login");
   }
 
   return {
@@ -95,7 +148,7 @@ export function useAuth() {
     handleGoogleLogin: () => handleLogin("google"),
     handleEmailRegister,
     handleEmailLogin,
-    hadleLogout,
+    handleLogout,
     setLoading,
   };
 }
