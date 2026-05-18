@@ -3,10 +3,17 @@ import { useAppSelector } from "@/hooks/redux";
 import { USER } from "../Dashbord";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/utils/formatDate";
+import { useState } from "react";
+import { TopUpModal } from "../modals/TopUpModal";
+import { PlateNumbersModal } from "../modals/PlateNumbersModal";
+import Link from "next/link";
 
 export function ProfileTab() {
   const { user } = useAppSelector((state) => state.auth);
   const { handleLogout } = useAuth();
+  const [topUpOpen, setTopUpOpen] = useState<boolean>(false);
+  const [plateOpen, setPlateOpen] = useState<boolean>(false);
+
   return (
     <div className="flex flex-col gap-4 pb-4">
       {/* Avatar + name */}
@@ -34,7 +41,10 @@ export function ProfileTab() {
           </p>
           <p className="text-white text-2xl font-bold">${user?.balance}</p>
         </div>
-        <button className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-xl transition-all active:scale-[0.97]">
+        <button
+          onClick={() => setTopUpOpen(true)}
+          className="px-4 py-2 bg-white/20 hover:bg-white/30 cursor-pointer text-white text-sm font-medium rounded-xl transition-all active:scale-[0.97]"
+        >
           Top up
         </button>
       </div>
@@ -45,6 +55,7 @@ export function ProfileTab() {
           {
             icon: (
               <svg
+                onClick={() => setPlateOpen(true)}
                 className="w-4 h-4 stroke-emerald-600 fill-none"
                 strokeWidth={2}
                 strokeLinecap="round"
@@ -71,7 +82,7 @@ export function ProfileTab() {
               </svg>
             ),
             label: "Support",
-            value: "Contact us",
+            value: "+994 55 282 18 12",
           },
         ].map((row) => (
           <div
@@ -93,25 +104,28 @@ export function ProfileTab() {
 
       {/* Settings rows */}
       <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden divide-y divide-gray-50">
-        {["Notifications", "Payment methods", "Privacy & Security"].map(
-          (item) => (
-            <button
-              key={item}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
+        {[
+          { title: "Notifications", href: "/notifications", id: 1 },
+          { title: "Payment methods", href: "/notifications", id: 2 },
+          { title: "Privacy & Security", href: "/privacy", id: 3 },
+        ].map((item) => (
+          <Link
+            href={item.href}
+            key={item.id}
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <span className="text-sm text-gray-600">{item.title}</span>
+            <svg
+              className="w-4 h-4 stroke-gray-300 fill-none"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
             >
-              <span className="text-sm text-gray-600">{item}</span>
-              <svg
-                className="w-4 h-4 stroke-gray-300 fill-none"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          ),
-        )}
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </Link>
+        ))}
       </div>
 
       {/* Sign out */}
@@ -121,6 +135,15 @@ export function ProfileTab() {
       >
         Sign out
       </button>
+      {topUpOpen && (
+        <TopUpModal isOpen={topUpOpen} onClose={() => setTopUpOpen(false)} />
+      )}
+      {plateOpen && (
+        <PlateNumbersModal
+          isOpen={plateOpen}
+          onClose={() => setPlateOpen(false)}
+        />
+      )}
     </div>
   );
 }

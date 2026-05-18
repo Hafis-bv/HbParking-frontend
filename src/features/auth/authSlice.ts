@@ -1,16 +1,7 @@
 import { firebaseAuth } from "@/lib/firebase";
+import { IUser } from "@/types/iUser";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-
-interface IUser {
-  id: string;
-  email: string;
-  createdAt: string;
-  balance: number;
-  role: string;
-  sessions: any[];
-  plateNumbers: any[];
-}
 
 interface InitialState {
   user: IUser | null;

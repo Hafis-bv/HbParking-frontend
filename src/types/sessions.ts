@@ -1,0 +1,14 @@
+import { PlateNumbers } from "./plateNumbers";
+import { Zones } from "./zones";
+
+export interface Sessions {
+  id: string;
+  startTime: Date;
+  endTime: Date | null;
+  totalCost: number | null;
+  userId: string;
+  zoneId: string;
+  plateNumberId: string;
+  zone?: Zones;
+  plateNumber?: PlateNumbers;
+}
