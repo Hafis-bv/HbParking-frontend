@@ -1,6 +1,5 @@
 "use client";
 import { useAppSelector } from "@/hooks/redux";
-import { USER } from "../Dashbord";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/utils/formatDate";
 import { useState } from "react";
@@ -67,7 +66,8 @@ export function ProfileTab() {
               </svg>
             ),
             label: "License plate",
-            value: USER.plate,
+            value: "Show all plates",
+            onClick: () => setPlateOpen(true),
           },
           {
             icon: (
@@ -83,10 +83,12 @@ export function ProfileTab() {
             ),
             label: "Support",
             value: "+994 55 282 18 12",
+            onClick: undefined,
           },
         ].map((row) => (
           <div
             key={row.label}
+            onClick={row.onClick}
             className="flex items-center justify-between px-4 py-3.5"
           >
             <div className="flex items-center gap-3">

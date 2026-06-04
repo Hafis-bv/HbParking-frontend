@@ -68,6 +68,85 @@ class Api {
       throw err;
     }
   }
+
+  async getMyPlates() {
+    const currentUser = firebaseAuth.currentUser;
+    if (!currentUser) return console.log("No user logged in");
+    const token = await currentUser.getIdToken();
+    try {
+      const res = await this.client.get("/plates", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+
+  async getZones() {
+    const currentUser = firebaseAuth.currentUser;
+    if (!currentUser) return console.log("No user logged in");
+    const token = await currentUser.getIdToken();
+    try {
+      const res = await this.client.get("/zones", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+
+  async getSession() {
+    const currentUser = firebaseAuth.currentUser;
+    if (!currentUser) return console.log("No user logged in");
+    const token = await currentUser.getIdToken();
+    try {
+      const res = await this.client.get("/sessions", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+
+  async startSession(zoneId: string, plateId: string) {
+    const currentUser = firebaseAuth.currentUser;
+    if (!currentUser) return console.log("No user logged in");
+    const token = await currentUser.getIdToken();
+    try {
+      const res = await this.client.post(
+        "/sessions",
+        { zoneId, plateId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+
+  // async endSession() {
+  //   const currentUser = firebaseAuth.currentUser;
+  //   if (!currentUser) return console.log("No user logged in");
+  //   const token = await currentUser.getIdToken();
+  //   try {
+  //     const res = await this.client.patch("/sessions", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     return res.data;
+  //   } catch (err) {
+  //     console.log(err);
+  //     throw err;
+  //   }
+  // }
 }
 
 const API = new Api();

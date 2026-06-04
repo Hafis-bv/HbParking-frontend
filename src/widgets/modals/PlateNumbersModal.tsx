@@ -1,10 +1,13 @@
 "use client";
 
 import { useAppSelector } from "@/hooks/redux";
+import { PlateErrorState, plateSchema } from "@/schemas/plate";
+import { PlateNumbers } from "@/types/plateNumbers";
 import API from "@/utils/api";
 import { formatDate } from "@/utils/formatDate";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import z from "zod";
 
 interface PlateNumbersModalProps {
   isOpen: boolean;
@@ -12,15 +15,47 @@ interface PlateNumbersModalProps {
 }
 
 export function PlateNumbersModal({ isOpen, onClose }: PlateNumbersModalProps) {
-  //   const [plates] = useState<Plate[]>(MOCK_PLATES);
+  const [plates, setPlates] = useState<PlateNumbers[]>([]);
   const [plate, setPlate] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const { user } = useAppSelector((state) => state.auth);
   const router = useRouter();
+  const [error, setError] = useState<PlateErrorState>({
+    plateNumber: null,
+  });
+
+  useEffect(() => {
+    if (user) {
+      setPlates(user.plateNumbers);
+    }
+  }, [user]);
 
   async function createPlateNumber() {
+    const result = plateSchema.safeParse({ plateNumber: plate });
+
+    if (!result.success) {
+      const flattened = z.flattenError(result.error);
+      const fieldErrors = flattened.fieldErrors;
+
+      setError({
+        plateNumber: fieldErrors.plateNumber?.[0] ?? null,
+      });
+      return;
+    }
+
     try {
       const res = await API.createPlateNumber(plate);
+      setPlates([...plates, res.data]);
+      setPlate("");
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function deletePlateNumber(plateId: string) {
+    try {
+      await API.deletePlateNumber(plateId);
+      setPlates(plates.filter((p) => p.id !== plateId));
     } catch (err) {
       console.log(err);
     }
@@ -60,7 +95,7 @@ export function PlateNumbersModal({ isOpen, onClose }: PlateNumbersModalProps) {
                 My plates
               </p>
               <p className="text-[11px] text-gray-400">
-                {user?.plateNumbers.length} registered
+                {plates.length} registered
               </p>
             </div>
           </div>
@@ -85,7 +120,7 @@ export function PlateNumbersModal({ isOpen, onClose }: PlateNumbersModalProps) {
 
         {/* Plates list */}
         <div className="flex flex-col gap-2 mb-4">
-          {user?.plateNumbers.map((plate) => (
+          {plates.map((plate) => (
             <div
               key={plate.id}
               className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all`}
@@ -105,7 +140,10 @@ export function PlateNumbersModal({ isOpen, onClose }: PlateNumbersModalProps) {
               </div>
 
               {/* Actions */}
-              <button className="w-7 h-7 flex cursor-pointer items-center justify-center rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors">
+              <button
+                onClick={() => deletePlateNumber(plate.id)}
+                className="w-7 h-7 flex cursor-pointer items-center justify-center rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors"
+              >
                 <svg
                   width="14"
                   height="14"
@@ -127,44 +165,54 @@ export function PlateNumbersModal({ isOpen, onClose }: PlateNumbersModalProps) {
 
         {/* Add plate */}
         {isAdding ? (
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="00-AA-000"
-                value={plate}
-                onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                maxLength={10}
-                className="w-full px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-sm font-mono font-semibold tracking-widest text-gray-800 placeholder:text-gray-300 placeholder:font-normal placeholder:tracking-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
-              />
-            </div>
-            <button
-              onClick={createPlateNumber}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 active:scale-[0.97] transition-all disabled:opacity-40 disabled:pointer-events-none"
-              disabled={plate.length < 3}
-            >
-              Add
-            </button>
-            <button
-              onClick={() => {
-                setIsAdding(false);
-                setPlate("");
-              }}
-              className="px-3 py-2.5 rounded-xl border border-gray-200 text-gray-400 text-sm hover:bg-gray-50 transition-colors"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
+          <div className="flex flex-col">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="00-AA-000"
+                  value={plate}
+                  onChange={(e) => {
+                    setPlate(e.target.value.toUpperCase());
+                    setError({ plateNumber: null });
+                  }}
+                  maxLength={10}
+                  className="w-full px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-sm font-mono font-semibold tracking-widest text-gray-800 placeholder:text-gray-300 placeholder:font-normal placeholder:tracking-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                />
+              </div>
+              <button
+                onClick={createPlateNumber}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 active:scale-[0.97] transition-all disabled:opacity-40 disabled:pointer-events-none"
+                disabled={plate.length < 3}
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+                Add
+              </button>
+              <button
+                onClick={() => {
+                  setIsAdding(false);
+                  setPlate("");
+                }}
+                className="px-3 py-2.5 rounded-xl border border-gray-200 text-gray-400 text-sm hover:bg-gray-50 transition-colors"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            {error.plateNumber && (
+              <p className="text-[11px] text-red-500 mt-1">
+                {error.plateNumber}
+              </p>
+            )}
           </div>
         ) : (
           <button

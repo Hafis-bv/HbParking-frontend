@@ -1,67 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { MAP_ZONES } from "../Dashbord";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import API from "@/utils/api";
+import { Zones } from "@/types/zones";
+import MapView from "@/components/MapView";
+import ZoneInfoModal from "@/widgets/modals/ZoneInfoModel";
 
 export function MapTab() {
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const [selectedZone, setSelectedZone] = useState<Zones | null>(null);
+  const [zones, setZones] = useState<Zones[]>([]);
+  const [search, setSearch] = useState<string>("");
+  const allZones = useRef<Zones[]>([]);
+  const [open, setOpen] = useState<boolean>(true);
+
+  async function fetchZones() {
+    const res = await API.getZones();
+    setZones(res);
+    allZones.current = res;
+  }
+
+  useEffect(() => {
+    fetchZones();
+  }, []);
+
+  function handleSearch(e: FormEvent) {
+    e.preventDefault();
+    if (!search) {
+      return setZones(allZones.current);
+    }
+
+    const filtered = allZones.current.filter((zone) =>
+      zone.name.toLowerCase().includes(search.toLowerCase()),
+    );
+    setZones(filtered);
+  }
 
   return (
     <div className="flex flex-col gap-5 pb-4">
       {/* Map placeholder */}
-      <div className="relative w-full h-52 rounded-2xl bg-emerald-50 border border-emerald-100 overflow-hidden flex items-center justify-center">
-        {/* Grid texture */}
-        <svg
-          className="absolute inset-0 w-full h-full opacity-20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <pattern
-              id="grid"
-              width="24"
-              height="24"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 24 0 L 0 0 0 24"
-                fill="none"
-                stroke="#059669"
-                strokeWidth="0.5"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-
-        {/* Zone blocks */}
-        <div className="relative z-10 grid grid-cols-2 gap-3 p-4 w-full h-full">
-          {MAP_ZONES.map((z) => (
-            <button
-              key={z.id}
-              onClick={() =>
-                setSelectedZone(z.id === selectedZone ? null : z.id)
-              }
-              className={`rounded-xl border-2 flex flex-col items-center justify-center transition-all active:scale-[0.97] ${
-                selectedZone === z.id
-                  ? "border-emerald-600 bg-emerald-600 text-white"
-                  : "border-emerald-100 bg-white/80 text-gray-700"
-              }`}
-            >
-              <span className="text-lg font-bold">Zone {z.id}</span>
-              <span
-                className={`text-xs font-medium mt-0.5 ${selectedZone === z.id ? "text-emerald-100" : "text-gray-400"}`}
-              >
-                {z.available}/{z.total} free
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Map attribution placeholder */}
-        <p className="absolute bottom-2 right-3 text-[10px] text-gray-400 z-20">
-          Connect map provider
-        </p>
-      </div>
+      <MapView />
 
       {/* Zone legend */}
       <div className="flex items-center gap-4 px-1">
@@ -77,65 +54,80 @@ export function MapTab() {
         ))}
       </div>
 
-      {/* Zone detail */}
-      {selectedZone &&
-        (() => {
-          const zone = MAP_ZONES.find((z) => z.id === selectedZone)!;
-          const pct = Math.round((zone.available / zone.total) * 100);
-          return (
-            <div className="rounded-2xl border border-emerald-100 bg-white p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-800">Zone {zone.id}</h3>
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    zone.available === 0
-                      ? "bg-red-50 text-red-500"
-                      : zone.available <= 5
-                        ? "bg-amber-50 text-amber-600"
-                        : "bg-emerald-50 text-emerald-600"
-                  }`}
-                >
-                  {zone.available === 0
-                    ? "Full"
-                    : zone.available <= 5
-                      ? "Limited"
-                      : "Available"}
-                </span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full mb-2">
-                <div
-                  className={`h-2 rounded-full transition-all ${zone.color}`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-400">
-                {zone.available} of {zone.total} spots free
-              </p>
-              <button className="mt-3 w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 active:scale-[0.98] transition-all">
-                Navigate to Zone {zone.id}
-              </button>
-            </div>
-          );
-        })()}
-
       {/* Search nearby */}
-      <div className="relative">
-        <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 stroke-gray-400 fill-none"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          viewBox="0 0 24 24"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="M21 21l-4.35-4.35" />
-        </svg>
+      <form onSubmit={handleSearch} className="relative">
+        <button>
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 stroke-gray-400 fill-none"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+        </button>
         <input
           type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search parking zone or address…"
           className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-[3px] focus:ring-emerald-500/10 transition-all"
         />
+      </form>
+      <div className="flex flex-col gap-3">
+        {zones.map((zone) => (
+          <button
+            onClick={() => {
+              setOpen(true);
+              setSelectedZone(zone);
+            }}
+            key={zone.id}
+            className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center justify-between cursor-pointer"
+          >
+            {/* Left */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#059669"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 3v18M3 9h18M3 15h18" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-[14px] font-semibold text-gray-900">
+                  {zone.name}
+                </p>
+                <p className="text-[11px] text-gray-400">{zone.address}</p>
+              </div>
+            </div>
+
+            {/* Right */}
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-[12px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                {zone.pricePerHour} ₼/h
+              </span>
+              <span className="text-[10px] text-gray-400">
+                {zone.maxCapacity} spots
+              </span>
+            </div>
+          </button>
+        ))}
       </div>
+      <ZoneInfoModal
+        zone={selectedZone}
+        isOpen={open}
+        onClose={() => setOpen(false)}
+      />
     </div>
   );
 }

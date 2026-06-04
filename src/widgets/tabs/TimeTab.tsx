@@ -1,10 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HISTORY, SESSION_DATA } from "../Dashbord";
+import API from "@/utils/api";
+import { Sessions } from "@/types/sessions";
 
 export function TimeTab() {
-  const [active, setActive] = useState(SESSION_DATA.isActive);
+  const [active, setActive] = useState<Sessions | null>(null);
+
+  async function fetchSession() {
+    const res = await API.getSession();
+    setActive(res);
+    console.log(res);
+  }
+
+  useEffect(() => {
+    fetchSession();
+  }, []);
 
   return (
     <div className="flex flex-col gap-5 pb-4">
@@ -62,10 +74,7 @@ export function TimeTab() {
                 ))}
               </div>
 
-              <button
-                onClick={() => setActive(false)}
-                className="mt-4 w-full py-2.5 rounded-xl bg-white text-emerald-700 text-sm font-semibold transition-all hover:bg-emerald-50 active:scale-[0.98]"
-              >
+              <button className="mt-4 w-full py-2.5 rounded-xl bg-white text-emerald-700 text-sm font-semibold transition-all hover:bg-emerald-50 active:scale-[0.98]">
                 End Session
               </button>
             </>
@@ -74,10 +83,7 @@ export function TimeTab() {
               <p className="text-emerald-100 text-sm mb-3">
                 You have no active parking session.
               </p>
-              <button
-                onClick={() => setActive(true)}
-                className="px-6 py-2.5 rounded-xl bg-white text-emerald-700 text-sm font-semibold hover:bg-emerald-50 active:scale-[0.98] transition-all"
-              >
+              <button className="px-6 py-2.5 rounded-xl bg-white text-emerald-700 text-sm font-semibold hover:bg-emerald-50 active:scale-[0.98] transition-all">
                 Start Parking
               </button>
             </div>

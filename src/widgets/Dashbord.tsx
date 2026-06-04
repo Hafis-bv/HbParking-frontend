@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HbParkingLogo } from "@/assets/icons/HbParkingLogo";
 import { ProfileIcon } from "@/assets/icons/ProfileIcon";
 import { ClockIcon } from "@/assets/icons/ClockIcon";
@@ -13,7 +13,6 @@ import { useAppSelector } from "@/hooks/redux";
 // ─── Tab types ───────────────────────────────────────────────────────────────
 type Tab = "time" | "map" | "profile";
 
-// ─── Placeholder data (replace with real backend calls) ──────────────────────
 export const SESSION_DATA = {
   isActive: true,
   zone: "A-12",
@@ -51,24 +50,12 @@ export const HISTORY = [
   },
 ];
 
-export const MAP_ZONES = [
-  { id: "A", available: 8, total: 20, color: "bg-emerald-500" },
-  { id: "B", available: 3, total: 20, color: "bg-amber-400" },
-  { id: "C", available: 0, total: 20, color: "bg-red-400" },
-  { id: "D", available: 15, total: 20, color: "bg-emerald-500" },
-];
-
-export const USER = {
-  name: "Amir Hasanov",
-  email: "amir@example.com",
-  plate: "10 AA 777",
-  plan: "Standard",
-  balance: "12.40",
-};
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Dashbord() {
-  const [tab, setTab] = useState<Tab>("time");
+  const [tab, setTab] = useState<Tab>(() => {
+    const savedTab = localStorage.getItem("tab") as Tab;
+    return savedTab || "time";
+  });
   const { user } = useAppSelector((state) => state.auth);
 
   const tabs: {
@@ -80,6 +67,10 @@ export default function Dashbord() {
     { id: "map", label: "Map", Icon: MapIcon },
     { id: "profile", label: "Profile", Icon: ProfileIcon },
   ];
+
+  useEffect(() => {
+    localStorage.setItem("tab", tab);
+  }, [tab]);
 
   return (
     <main className="min-h-screen bg-emerald-50 flex flex-col items-center px-4 pt-6 pb-24">
