@@ -1,25 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { X, MapPin, CircleParking, CreditCard, Car } from "lucide-react";
 import { Zones } from "@/types/zones";
-import { PlateNumbers } from "@/types/plateNumbers"; // путь подгони под свой
+import { PlateNumbers } from "@/types/plateNumbers";
+import { useAppSelector } from "@/hooks/redux";
+import API from "@/utils/api";
+import { Tab } from "@/types/tab";
 
 interface ZoneInfoModalProps {
   zone: Zones | null;
   isOpen: boolean;
   onClose: () => void;
-  plates: PlateNumbers[];
-  onStartSession?: (plateId: string) => void;
+  setTab: Dispatch<SetStateAction<Tab>>;
+}
+
+interface ZoneErrorState {
+  general: string | null;
 }
 
 export default function ZoneInfoModal({
   zone,
   isOpen,
   onClose,
-  plates,
-  onStartSession,
+  setTab,
 }: ZoneInfoModalProps) {
+  const { user } = useAppSelector((state) => state.auth);
+  const plates: PlateNumbers[] = user?.plateNumbers ?? [];
   const latestPlateId =
     plates.length > 0
       ? [...plates].sort(
@@ -29,6 +36,9 @@ export default function ZoneInfoModal({
       : "";
 
   const [selectedPlateId, setSelectedPlateId] = useState(latestPlateId);
+  const [error, setError] = useState<ZoneErrorState>({
+    general: null,
+  });
 
   if (!isOpen || !zone) return null;
 
@@ -36,14 +46,41 @@ export default function ZoneInfoModal({
   const availableSpots = zone.maxCapacity - occupied;
   const isFull = availableSpots <= 0;
 
-  function handleStart() {
-    onStartSession?.(selectedPlateId);
+  async function handleStart() {
+    setError({ general: null });
+
+    if (!zone?.id) {
+      setError({ general: "Zone not found" });
+      return;
+    }
+    if (!selectedPlateId) {
+      setError({ general: "Please select a plate number" });
+      return;
+    }
+
+    try {
+      const res = await API.startSession(zone?.id, selectedPlateId);
+      localStorage.setItem("tab", "time");
+      setTab("time");
+
+      setError({ general: null });
+    } catch (err: any) {
+      console.log(err);
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Failed to start parking";
+      setError({ general: message });
+    }
   }
 
   return (
     <div
       className="fixed inset-0 z-[900] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={() => {
+        onClose();
+        setError({ general: null });
+      }}
     >
       <div
         className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300"
@@ -52,7 +89,10 @@ export default function ZoneInfoModal({
         {/* Header */}
         <div className="relative bg-gradient-to-br from-emerald-500 to-green-600 px-6 pt-6 pb-8">
           <button
-            onClick={onClose}
+            onClick={() => {
+              onClose();
+              setError({ general: null });
+            }}
             className="absolute right-4 top-4 rounded-full bg-white/20 p-1.5 text-white transition hover:bg-white/30"
           >
             <X size={20} />
@@ -134,7 +174,13 @@ export default function ZoneInfoModal({
         </div>
 
         {/* Footer — кнопка */}
-        <div className="px-6 pb-6 pt-1">
+
+        <div className="px-6 pb-6 pt-1 flex flex-col justify-center items-center">
+          {error.general && (
+            <span className="text-[15px] text-red-500 mb-3 block">
+              {error.general}
+            </span>
+          )}
           <button
             onClick={handleStart}
             disabled={isFull || plates.length === 0}

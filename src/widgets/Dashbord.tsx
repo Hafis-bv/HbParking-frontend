@@ -9,19 +9,7 @@ import { MapTab } from "./tabs/MapTab";
 import { ProfileTab } from "./tabs/ProfileTab";
 import { MapIcon } from "@/assets/icons/MapIcon";
 import { useAppSelector } from "@/hooks/redux";
-
-// ─── Tab types ───────────────────────────────────────────────────────────────
-type Tab = "time" | "map" | "profile";
-
-export const SESSION_DATA = {
-  isActive: true,
-  zone: "A-12",
-  spot: "14",
-  startTime: "09:30",
-  elapsed: "1h 24m",
-  rate: "0.80",
-  total: "1.12",
-};
+import { Tab } from "@/types/tab";
 
 export const HISTORY = [
   {
@@ -91,7 +79,7 @@ export default function Dashbord() {
         {/* Tab content */}
         <div>
           {tab === "time" && <TimeTab />}
-          {tab === "map" && <MapTab />}
+          {tab === "map" && <MapTab setTab={setTab} />}
           {tab === "profile" && <ProfileTab />}
         </div>
       </div>

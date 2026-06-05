@@ -1,12 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  FormEvent,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import API from "@/utils/api";
 import { Zones } from "@/types/zones";
 import MapView from "@/components/MapView";
 import ZoneInfoModal from "@/widgets/modals/ZoneInfoModel";
+import { Tab } from "@/types/tab";
 
-export function MapTab() {
+interface MapTabProps {
+  setTab: Dispatch<SetStateAction<Tab>>;
+}
+
+export function MapTab({ setTab }: MapTabProps) {
   const [selectedZone, setSelectedZone] = useState<Zones | null>(null);
   const [zones, setZones] = useState<Zones[]>([]);
   const [search, setSearch] = useState<string>("");
@@ -124,6 +136,7 @@ export function MapTab() {
         ))}
       </div>
       <ZoneInfoModal
+        setTab={setTab}
         zone={selectedZone}
         isOpen={open}
         onClose={() => setOpen(false)}
